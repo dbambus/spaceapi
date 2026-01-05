@@ -1,4 +1,4 @@
-FROM ubuntu:22.04.1
+FROM ubuntu:24.04.3
 # (note: within the FAU FabLab installation, this image is aliased to the custom "basislinux")
 
 RUN apt-get update && \
@@ -7,7 +7,7 @@ RUN apt-get update && \
 
 ADD . /srv/
 
-RUN pip3 install -q --upgrade -r /srv/requirements-server.txt
+RUN pip3 install --break-system-packages -q --upgrade -r /srv/requirements-server.txt
 
 # www-data already exists in base installation. Change to our docker UID range.
 RUN usermod -u 400 www-data && groupmod -g 400 www-data
