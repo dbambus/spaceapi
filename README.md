@@ -49,6 +49,16 @@ SQL = "sqlite:///db.db"
 HOST = "192.168.1.1"
 ```
 
+### HMAC key
+
+The HMAC key is a shared secret: the server and every client that updates the door state
+(e.g. the door sensor Pi) must use the same key file.
+
+In production the key is stored on the server at `brain.fablab.fau.de:/mnt/secrets/spaceapi/key`.
+[brain-docker-config](https://github.com/fau-fablab/brain-docker-config) mounts that directory into the
+server container (`spaceapi.add_volume(secrets_prefix + "/spaceapi/", ...)` in `kastenwesen_config.py`),
+and the `Dockerfile` starts the server with `--key /mnt/secrets/spaceapi/key`.
+
 ## Client
 
 Can update entries of SpaceAPI server and plot opening hour graphs.
@@ -137,9 +147,13 @@ sudo /home/tuerstatus/spaceapi/misc/install-sensor.sh
 
 It installs `gpiod`, `python3-requests` and `python3-dateutil` (the sensor does not need
 matplotlib), creates the user `tuerstatus` in the `gpio` group, adds `/home/tuerstatus/door.key`
-from `misc/door.key.example` (put the key of the server in there), mounts a tmpfs on
+from `misc/door.key.example`, mounts a tmpfs on
 `/mnt/ramdisk` for the success marker `tuerstatus.success`, sets the NTP server to `ntp0.fau.de`
 (the Pi has no RTC) and enables the timer.
+
+Afterwards replace the placeholder in `/home/tuerstatus/door.key` with the shared secret of the
+server (see [HMAC key](#hmac-key)), e.g. by copying `brain.fablab.fau.de:/mnt/secrets/spaceapi/key`.
+Until then the server rejects the updates of the sensor.
 
 The script is run every minute by the systemd timer in `misc/`.
 
