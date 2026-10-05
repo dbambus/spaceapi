@@ -20,7 +20,8 @@ if [ "$(cd "$(dirname "${0}")/.." && pwd)" != "${REPO_DIR}" ]; then
 fi
 
 # dependencies: the sensor only uses the "update" action, so no matplotlib
-apt-get install -y gpiod python3-requests python3-dateutil
+apt-get update
+apt-get install -y gpiod python3-requests python3-dateutil unattended-upgrades
 
 # dedicated user with access to the GPIO pins
 id "${USER_NAME}" >/dev/null 2>&1 || adduser --disabled-password --gecos "" "${USER_NAME}"
@@ -44,6 +45,22 @@ mountpoint -q /mnt/ramdisk || mount /mnt/ramdisk
 mkdir -p /etc/systemd/timesyncd.conf.d
 printf '[Time]\nNTP=%s\n' "${NTP_SERVER}" > /etc/systemd/timesyncd.conf.d/fau.conf
 systemctl restart systemd-timesyncd
+
+# automatic updates: Raspbian has no separate security suite, so take all updates of the release
+# (and of the Raspberry Pi archive for kernel and firmware), reboot at night if needed
+cat > /etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+EOF
+cat > /etc/apt/apt.conf.d/51fablab-unattended-upgrades <<'EOF'
+// installed by spaceapi/misc/install-sensor.sh
+Unattended-Upgrade::Origins-Pattern {
+	"origin=Raspbian,codename=${distro_codename},label=Raspbian";
+	"origin=Raspberry Pi Foundation,codename=${distro_codename},label=Raspberry Pi Foundation";
+};
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "04:00";
+EOF
 
 # timer
 install -m 644 "${REPO_DIR}"/misc/update_doorstate.{service,timer} /etc/systemd/system/

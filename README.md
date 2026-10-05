@@ -151,6 +151,10 @@ from `misc/door.key.example`, mounts a tmpfs on
 `/mnt/ramdisk` for the success marker `tuerstatus.success`, sets the NTP server to `ntp0.fau.de`
 (the Pi has no RTC) and enables the timer.
 
+It also enables automatic updates with `unattended-upgrades`. Raspbian has no separate security
+suite, so all updates of the release and of the Raspberry Pi archive (kernel, firmware) are
+installed, with a reboot at 04:00 if needed. Check with `sudo unattended-upgrade --dry-run --debug`.
+
 Afterwards replace the placeholder in `/home/tuerstatus/door.key` with the shared secret of the
 server (see [HMAC key](#hmac-key)), e.g. by copying `brain.fablab.fau.de:/mnt/secrets/spaceapi/key`.
 Until then the server rejects the updates of the sensor.
