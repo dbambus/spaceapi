@@ -127,43 +127,20 @@ The script reads the pin with `gpioget` from libgpiod, so it also works on curre
 Raspberry Pi OS (Debian 13 "trixie"), where the old sysfs GPIO interface is gone.
 Set `DOORSTATE_INVERTED` in the script according to how the sensor is wired.
 
-Setup:
+Setup: check out this repository in `/home/tuerstatus/spaceapi` and run the install script:
 
 ```sh
-# dependencies: the sensor only needs the "update" action, matplotlib is just for plots
-apt install gpiod python3-requests python3-dateutil
-
-# dedicated user, allowed to access the GPIO pins
-adduser --disabled-password --gecos "" tuerstatus
-usermod -aG gpio tuerstatus
-
-# HMAC key, must be identical to the key of the server (see misc/door.key.example)
-install -m 600 -o tuerstatus -g tuerstatus misc/door.key.example /home/tuerstatus/door.key
-$EDITOR /home/tuerstatus/door.key
-
-# checkout of this repository, where the systemd service expects it
-git clone https://github.com/fau-fablab/spaceapi.git /home/tuerstatus/spaceapi
-chown -R tuerstatus: /home/tuerstatus/spaceapi
+sudo git clone https://github.com/fau-fablab/spaceapi.git /home/tuerstatus/spaceapi
+sudo /home/tuerstatus/spaceapi/misc/install-sensor.sh
 ```
 
-The script touches `/mnt/ramdisk/tuerstatus.success` after every update, so that
-monitoring can see that the sensor is alive. The ramdisk must be writable by `tuerstatus`:
+It installs `gpiod`, `python3-requests` and `python3-dateutil` (the sensor does not need
+matplotlib), creates the user `tuerstatus` in the `gpio` group, adds `/home/tuerstatus/door.key`
+from `misc/door.key.example` (put the key of the server in there), mounts a tmpfs on
+`/mnt/ramdisk` for the success marker `tuerstatus.success`, sets the NTP server to `ntp0.fau.de`
+(the Pi has no RTC) and enables the timer.
 
-```sh
-mkdir -p /mnt/ramdisk
-echo 'tmpfs /mnt/ramdisk tmpfs defaults,noexec,nosuid,nodev,size=1m,uid=tuerstatus,gid=tuerstatus,mode=0755 0 0' >> /etc/fstab
-mount /mnt/ramdisk
-```
-
-This script will be run every minute by the systemd timer in `misc/`.
-To install the timer run:
-
-```sh
-cp misc/update_doorstate.{service,timer} /etc/systemd/system/
-systemctl daemon-reload
-systemctl enable --now update_doorstate.timer
-systemctl list-timers
-```
+The script is run every minute by the systemd timer in `misc/`.
 
 ## Embed on Website
 
