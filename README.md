@@ -123,14 +123,45 @@ It uses the script `misc/update-status.sh`.
 Connect 3V3 and GPIO17 to the sensor, and add a 10k resistor from GPIO17 to GND.
 While not required, adding a 1k resistor before GPIO17 is recommended.
 It acts as a failsafe, protecting the RPi in case of configuration problems.
+The script reads the pin with `gpioget` from libgpiod, so it also works on current
+Raspberry Pi OS (Debian 13 "trixie"), where the old sysfs GPIO interface is gone.
+Set `DOORSTATE_INVERTED` in the script according to how the sensor is wired.
+
+Setup:
+
+```sh
+# dependencies: the sensor only needs the "update" action, matplotlib is just for plots
+apt install gpiod python3-requests python3-dateutil
+
+# dedicated user, allowed to access the GPIO pins
+adduser --disabled-password --gecos "" tuerstatus
+usermod -aG gpio tuerstatus
+
+# HMAC key, must be identical to the key of the server (see misc/door.key.example)
+install -m 600 -o tuerstatus -g tuerstatus misc/door.key.example /home/tuerstatus/door.key
+$EDITOR /home/tuerstatus/door.key
+
+# checkout of this repository, where the systemd service expects it
+git clone https://github.com/fau-fablab/spaceapi.git /home/tuerstatus/spaceapi
+chown -R tuerstatus: /home/tuerstatus/spaceapi
+```
+
+The script touches `/mnt/ramdisk/tuerstatus.success` after every update, so that
+monitoring can see that the sensor is alive. The ramdisk must be writable by `tuerstatus`:
+
+```sh
+mkdir -p /mnt/ramdisk
+echo 'tmpfs /mnt/ramdisk tmpfs defaults,noexec,nosuid,nodev,size=1m,uid=tuerstatus,gid=tuerstatus,mode=0755 0 0' >> /etc/fstab
+mount /mnt/ramdisk
+```
+
 This script will be run every minute by the systemd timer in `misc/`.
 To install the timer run:
 
 ```sh
 cp misc/update_doorstate.{service,timer} /etc/systemd/system/
 systemctl daemon-reload
-systemctl start update_doorstate.timer
-systemctl enable update_doorstate.timer
+systemctl enable --now update_doorstate.timer
 systemctl list-timers
 ```
 
