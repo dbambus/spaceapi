@@ -125,7 +125,8 @@ While not required, adding a 1k resistor before GPIO17 is recommended.
 It acts as a failsafe, protecting the RPi in case of configuration problems.
 The script reads the pin with `gpioget` from libgpiod, so it also works on current
 Raspberry Pi OS (Debian 13 "trixie"), where the old sysfs GPIO interface is gone.
-Set `DOORSTATE_INVERTED` in the script according to how the sensor is wired.
+`DOORSTATE_INVERTED` in the script is `true` for our sensor, where the pin reads 1 while the door is closed
+(check with `gpioget -c gpiochip0 --numeric 17`). Set it to `false` if your sensor reads 0 when closed.
 
 Setup: check out this repository in `/home/tuerstatus/spaceapi` and run the install script:
 

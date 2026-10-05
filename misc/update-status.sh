@@ -18,7 +18,7 @@ GPIO_IN_PIN="17"
 # invert logic?
 # false: switch closed = door closed
 # true: switch open = door closed 
-DOORSTATE_INVERTED="false"
+DOORSTATE_INVERTED="true"
 
 ###
 # script
